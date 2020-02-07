@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql.expression import func
 from flask_cors import CORS
 import random
 
@@ -235,9 +236,9 @@ def create_app(test_config=None):
   @app.route('/quizzes', methods=['POST'])
 
   def get_quizzes():
-      body = request.get_json()
-      prev_question = body.get('previous_questions', None)
-      quiz_category = body.get('quiz_category', None)
+    try:
+      prev_question = request.get_json('previous_questions')['previous_questions']
+      quiz_category = request.get_json('quiz_category')['quiz_category']
 
       category_id = int(quiz_category['id'])
 
@@ -252,7 +253,7 @@ def create_app(test_config=None):
       else:
         if(category_id>0):
           current_question = Question.query.filter(
-            Question.category==quiz_category['id'])\
+            Question.category==category_id)\
                 .order_by(func.random()).first()
         else:
           current_question = Question.query.order_by(func.random()).first()
@@ -267,7 +268,8 @@ def create_app(test_config=None):
         'question': formatted_question
         })
       
-
+    except Exception:
+      abort(422)
 
   '''
   @TODO: 
