@@ -6,7 +6,7 @@ import random
 
 from models import setup_db, Question, Category
 
-QUESTIONS_PER_PAGE = 10
+QUESTIONS_PER_PAGE = 30
 
 def paginate(request, selection):
     page = request.args.get('page', 1, type=int)
@@ -82,7 +82,7 @@ def create_app(test_config=None):
     selection=Question.query.order_by(Question.id).all()
     current_questions=paginate(request,selection)
 
-    if len(current_books) == 0:
+    if len(current_questions) == 0:
       abort(404)
 
     categories={
@@ -93,7 +93,7 @@ def create_app(test_config=None):
       'success':True,
       'questions':current_questions,
       'total_questions':len(Question.query.all()),
-      'current_category':[],
+      'current_category': [(question['category']) for question in current_questions],
       'categories':categories
       })
 
@@ -105,12 +105,10 @@ def create_app(test_config=None):
   This removal will persist in the database and when you refresh the page. 
   '''
 
-  @app('/questions/<int:question_id>', methods=['DELETE'])
+  @app.route('/questions/<int:question_id>',methods=['DELETE'])
 
   def delete_question(question_id):
-    try:
       question_to_delete=Question.query.filter(Question.id==question_id).one_or_none()
-
       if question_to_delete is None:
         abort(404)
 
@@ -125,9 +123,6 @@ def create_app(test_config=None):
         'questions':current_questions,
         'total_questions':len(Question.query.all())
         })
-
-    except:
-      abort(422)
 
   '''
   @TODO: 
@@ -152,13 +147,13 @@ def create_app(test_config=None):
   @app.route('/questions', methods=['POST'])
 
   def create_question():
-    body=request.get_json()
+    body = request.get_json()
 
-    new_question=body.get('question', None)
-    new_answer=body.get('answer', None)
-    new_category=body.get('category', None)
-    new_difficulty=body.get('difficulty', None)
-    search_term=body.get('searchTerm', None)
+    new_question = request.args.get('question', None)
+    new_answer = request.args.get('answer', None)
+    new_category = request.args.get('category', None)
+    new_difficulty = request.args.get('difficulty', None)
+    search_term = request.args.get('searchTerm', None)
 
     try:
       if search_term:
@@ -202,7 +197,7 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
-  @app('/categories/<int:category_id>/questions', methods=['GET'])
+  @app.route('/categories/<int:category_id>/questions', methods=['GET'])
 
   def get_questions_categories(category_id):
     current_category=Category.query.filter(Category.id==category_id).one_or_none()
@@ -211,7 +206,7 @@ def create_app(test_config=None):
       abort(404)
 
     selection=Question.query.filter(
-      Question.category_id==category_id).all()
+      Question.category==category_id).all()
 
     current_questions=paginate(request, selection)
 
@@ -237,10 +232,9 @@ def create_app(test_config=None):
   and shown whether they were correct or not. 
   '''
 
-  @app('/quizzes', methods=['POST'])
+  @app.route('/quizzes', methods=['POST'])
 
   def get_quizzes():
-    try:
       body = request.get_json()
       prev_question = body.get('previous_questions', None)
       quiz_category = body.get('quiz_category', None)
@@ -273,8 +267,7 @@ def create_app(test_config=None):
         'question': formatted_question
         })
       
-    except Exception:
-      abort(422)
+
 
   '''
   @TODO: 
