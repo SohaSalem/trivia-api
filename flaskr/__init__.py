@@ -7,7 +7,7 @@ import random
 
 from models import setup_db, Question, Category
 
-QUESTIONS_PER_PAGE = 30
+QUESTIONS_PER_PAGE = 10
 
 def paginate(request, selection):
     page = request.args.get('page', 1, type=int)
